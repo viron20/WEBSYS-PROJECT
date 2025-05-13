@@ -10,7 +10,7 @@
 </head>
 <body>
   <div class="dashboard-container">
-    <!-- Sidebar omitted for brevity (same as before) -->
+    <!-- Sidebar Omitted for Brevity -->
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -63,7 +63,7 @@
 
                 <div class="mt-4 d-flex justify-content-end gap-2">
                   <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
-                  <button type="button" class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
+                  <button type="reset" class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
                 </div>
               </form>
             </div>
@@ -86,6 +86,11 @@
       const preview = document.getElementById('preview');
       preview.src = URL.createObjectURL(event.target.files[0]);
     }
+
+    // Show current date
+    document.getElementById("current-date").textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
   </script>
 </body>
 </html>
