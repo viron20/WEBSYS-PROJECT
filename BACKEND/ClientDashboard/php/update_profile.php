@@ -1,39 +1,66 @@
 <?php
 session_start();
-include '../../auth-app/connection.php'; // Adjust path to your DB connection
+include 'connection.php'; // your DB connection
 
-// Ensure user is logged in
-if (!isset($_SESSION['user'])) {
-    header('Location: ../../auth-app/login.php');
-    exit();
+if (!isset($_SESSION['client_id'])) {
+    die("Unauthorized access.");
 }
 
-$user_id = $_SESSION['user']['id']; // Assumes you have an 'id' field
+$clientID = $_SESSION['client_id'];
+$fullName = trim($_POST['fullName']);
+$email = trim($_POST['emailAddress']);
+$company = trim($_POST['companyName']);
+$profilePhoto = null;
 
-// Sanitize input
-$full_name = trim($_POST['full_name']);
-$email = trim($_POST['email']);
-$company = trim($_POST['company'] ?? '');
+if ($_FILES['profile_photo']['name']) {
+    $targetDir = "uploads/";
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0755, true);
+    }
 
-// Basic validation
-if ($full_name === '' || $email === '') {
-    echo "Full name and email are required.";
-    exit();
+    $fileName = basename($_FILES['profile_photo']['name']);
+    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+
+    if (in_array($fileExt, $allowedTypes)) {
+        $newName = "client_" . $clientID . "_" . time() . "." . $fileExt;
+        $targetFile = $targetDir . $newName;
+
+        if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $targetFile)) {
+            $profilePhoto = $targetFile;
+        } else {
+            echo "Failed to upload image.";
+            exit;
+        }
+    } else {
+        echo "Invalid file type.";
+        exit;
+    }
 }
 
-// Update query
-$sql = "UPDATE users SET first_name = ?, email = ?, company_name = ? WHERE id = ?";
+// Prepare SQL
+$sql = "UPDATE clients SET name = ?, email = ?, company = ?";
+$params = [$fullName, $email, $company];
+$types = "sss";
+
+if ($profilePhoto) {
+    $sql .= ", profile_photo = ?";
+    $params[] = $profilePhoto;
+    $types .= "s";
+}
+
+$sql .= " WHERE id = ?";
+$params[] = $clientID;
+$types .= "i";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sssi", $full_name, $email, $company, $user_id);
+$stmt->bind_param($types, ...$params);
 
 if ($stmt->execute()) {
-    // Update session values
-    $_SESSION['user']['first_name'] = $full_name;
-    $_SESSION['user']['email'] = $email;
-    $_SESSION['user']['company_name'] = $company;
-
-    header('Location: clientProfile.php?updated=true');
-    exit();
+    header("Location: clientProfile.html?updated=1");
+    exit;
 } else {
-    echo "Error updating profile.";
+    echo "Database error: " . $stmt->error;
 }
+?>
+
