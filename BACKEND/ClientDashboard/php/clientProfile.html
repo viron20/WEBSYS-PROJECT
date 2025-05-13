@@ -92,5 +92,29 @@
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
   </script>
+  <script>
+  // Show current date
+  document.getElementById("current-date").textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // Load client profile data
+  window.addEventListener('DOMContentLoaded', () => {
+    fetch('getClientProfile.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          console.error(data.error);
+        } else {
+          document.getElementById('fullName').value = data.name || '';
+          document.getElementById('emailAddress').value = data.email || '';
+          document.getElementById('companyName').value = data.company || '';
+          document.getElementById('preview').src = data.profile_photo ? `uploads/${data.profile_photo}` : 'uploads/default.jpg';
+        }
+      })
+      .catch(error => console.error('Error loading profile:', error));
+  });
+</script>
+
 </body>
 </html>
